@@ -50,6 +50,8 @@ public:
     }
 };
 
+const size_t Buffer_Size = BUFSIZ;
+
 class Extracter {
 private:
     std::ifstream ifs_;
@@ -57,7 +59,7 @@ private:
     size_t file_size_;
     size_t origin_;
     size_t output_file_size_;
-    char buf_[BUFSIZ];
+    char buf_[Buffer_Size];
     Timer timer_;
 
 public:
@@ -89,7 +91,7 @@ public:
         // file size
         {
             file_size_ = static_cast<size_t>(ifs_.seekg(0, std::ios::end).tellg());
-            ifs_.seekg(0, std::ios::beg);     // ストリームのポインタを一番前に戻して、これから先で使いやすいようにする
+            ifs_.seekg(0, std::ios::beg);
         }
 
         // origin
@@ -138,13 +140,13 @@ public:
         ifs_.seekg(origin_);
         size_t remaining_file_size = output_file_size_;
         while (true) {
-            if (remaining_file_size >= BUFSIZ) {
-                ifs_.read(buf_, BUFSIZ);
-                ofs_.write(buf_, BUFSIZ);
-                remaining_file_size -= BUFSIZ;
+            if (remaining_file_size >= Buffer_Size) {
+                ifs_.read(buf_, Buffer_Size);
+                ofs_.write(buf_, Buffer_Size);
+                remaining_file_size -= Buffer_Size;
             }
             else {
-                // 最後のファイル出力。 remaining_file_size == 0 の時もあり得るが問題ない。
+                // the last of file output. remaining_file_size == 0 is OK too.
                 ifs_.read(buf_, remaining_file_size);
                 ofs_.write(buf_, remaining_file_size);
                 break;
