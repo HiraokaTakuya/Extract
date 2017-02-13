@@ -65,9 +65,10 @@ private:
 public:
     Extracter(const int argc, const char* argv[]) : timer_() {
         if (argc != 5) {
-            std::cout << "Usage " << argv[0] << " <input file> <output file> <origin> <output file size>"
+            std::cerr << "Usage " << argv[0] << " <input file> <output file> <origin> <output file size>"
                       << "\noutput file size: end: extract to the end."
                       << std::endl;
+            exit(EXIT_FAILURE);
         }
 
         // input file open
