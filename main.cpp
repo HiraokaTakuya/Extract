@@ -140,19 +140,14 @@ public:
     void process() {
         ifs_.seekg(origin_);
         size_t remaining_file_size = output_file_size_;
-        while (true) {
-            if (remaining_file_size >= Buffer_Size) {
-                ifs_.read(buf_, Buffer_Size);
-                ofs_.write(buf_, Buffer_Size);
-                remaining_file_size -= Buffer_Size;
-            }
-            else {
-                // the last of file output. remaining_file_size == 0 is OK too.
-                ifs_.read(buf_, remaining_file_size);
-                ofs_.write(buf_, remaining_file_size);
-                break;
-            }
+        while (remaining_file_size >= Buffer_Size) {
+            ifs_.read(buf_, Buffer_Size);
+            ofs_.write(buf_, Buffer_Size);
+            remaining_file_size -= Buffer_Size;
         }
+        // the last of file output. If remaining_file_size == 0, it is OK.
+        ifs_.read(buf_, remaining_file_size);
+        ofs_.write(buf_, remaining_file_size);
         std::cout << "Elapsed: " << std::fixed << timer_.elapsed_sec_f() << std::endl;
     }
 };
