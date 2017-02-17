@@ -20,6 +20,8 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <algorithm>
+#include <iterator>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -50,16 +52,12 @@ public:
     }
 };
 
-const size_t Buffer_Size = BUFSIZ;
-
 class Extracter {
 private:
     std::ifstream ifs_;
     std::ofstream ofs_;
-    size_t file_size_;
-    size_t origin_;
-    size_t output_file_size_;
-    char buf_[Buffer_Size];
+    int64_t origin_;
+    int64_t output_file_size_;
     Timer timer_;
 
 public:
@@ -72,83 +70,63 @@ public:
         }
 
         // input file open
-        {
-            ifs_.open(argv[1], std::ios::binary);
-            if (!ifs_.is_open()) {
-                std::cerr << argv[1] << " isn't opened." << std::endl;
-                exit(EXIT_FAILURE);
-            }
+        ifs_.open(argv[1], std::ios::binary);
+        if (!ifs_.is_open()) {
+            std::cerr << argv[1] << " isn't opened." << std::endl;
+            exit(EXIT_FAILURE);
         }
 
         // output file open
-        {
-            ofs_.open(argv[2], std::ios::binary);
-            if (!ofs_.is_open()) {
-                std::cerr << argv[2] << " isn't opened." << std::endl;
-                exit(EXIT_FAILURE);
-            }
+        ofs_.open(argv[2], std::ios::binary);
+        if (!ofs_.is_open()) {
+            std::cerr << argv[2] << " isn't opened." << std::endl;
+            exit(EXIT_FAILURE);
         }
 
         // file size
-        {
-            file_size_ = static_cast<size_t>(ifs_.seekg(0, std::ios::end).tellg());
-            ifs_.seekg(0, std::ios::beg);
-        }
+        const int64_t file_size = ifs_.seekg(0, std::ios::end).tellg();
+        ifs_.seekg(0, std::ios::beg);
 
         // origin
-        {
-            std::istringstream iss(argv[3]);
-            int64_t tmp_origin;
-            if (!(iss >> tmp_origin)) {
-                std::cerr << argv[3] << " isn't number." << std::endl;
-                exit(EXIT_FAILURE);
-            }
-            else if (tmp_origin < 0) {
-                std::cerr << argv[3] << " is minus number." << std::endl;
-                exit(EXIT_FAILURE);
-            }
-            else if (tmp_origin > (int64_t)file_size_) {
-                std::cerr << argv[3] << " is larger than file size." << std::endl;
-                exit(EXIT_FAILURE);
-            }
-            origin_ = tmp_origin;
+        std::istringstream iss0(argv[3]);
+        if (!(iss0 >> origin_)) {
+            std::cerr << argv[3] << " isn't number." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        else if (origin_ < 0) {
+            std::cerr << argv[3] << " is minus number." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        else if (origin_ > file_size) {
+            std::cerr << argv[3] << " is larger than file size." << std::endl;
+            exit(EXIT_FAILURE);
         }
 
         // output file size
-        {
-            if (std::string(argv[4]) == "end")
-                output_file_size_ = file_size_ - origin_;
-            else {
-                std::istringstream iss(argv[4]);
-                int64_t tmp_output_file_size;
-                if (!(iss >> tmp_output_file_size)) {
-                    std::cerr << argv[4] << " isn't number."  << std::endl;
-                    exit(EXIT_FAILURE);
-                }
-                else if (tmp_output_file_size < 0) {
-                    std::cerr << argv[4] << " is minus number." << std::endl;
-                    exit(EXIT_FAILURE);
-                }
-                else if (tmp_output_file_size > int64_t(file_size_ - origin_)) {
-                    std::cerr << argv[4] << " is larger than file size." << std::endl;
-                    exit(EXIT_FAILURE);
-                }
-                output_file_size_ = tmp_output_file_size;
+        if (std::string(argv[4]) == "end")
+            output_file_size_ = file_size - origin_;
+        else {
+            std::istringstream iss1(argv[4]);
+            if (!(iss1 >> output_file_size_)) {
+                std::cerr << argv[4] << " isn't number."  << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            else if (output_file_size_ < 0) {
+                std::cerr << argv[4] << " is minus number." << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            else if (output_file_size_ > file_size - origin_) {
+                std::cerr << argv[4] << " is larger than file size." << std::endl;
+                exit(EXIT_FAILURE);
             }
         }
     }
     void process() {
         ifs_.seekg(origin_);
-        size_t remaining_file_size = output_file_size_;
-        while (remaining_file_size >= Buffer_Size) {
-            ifs_.read(buf_, Buffer_Size);
-            ofs_.write(buf_, Buffer_Size);
-            remaining_file_size -= Buffer_Size;
-        }
-        // the last of file output. If remaining_file_size == 0, it is OK.
-        ifs_.read(buf_, remaining_file_size);
-        ofs_.write(buf_, remaining_file_size);
-        std::cout << "Elapsed: " << std::fixed << timer_.elapsed_sec_f() << std::endl;
+        std::istreambuf_iterator<char> isb(ifs_);
+        std::ostreambuf_iterator<char> osb(ofs_);
+        std::copy_n(isb, output_file_size_, osb);
+        std::cout << "Elapsed: " << std::fixed << timer_.elapsed_sec_f() << " [sec]" << std::endl;
     }
 };
 
