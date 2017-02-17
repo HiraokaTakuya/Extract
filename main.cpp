@@ -32,24 +32,16 @@ class Timer {
 private:
     std::chrono::time_point<std::chrono::system_clock> t_ = std::chrono::system_clock::now();
 
-    auto elapsed() -> decltype(std::chrono::system_clock::now() - t_) const {
+    auto elapsed() const -> decltype(std::chrono::system_clock::now() - t_) {
         return std::chrono::system_clock::now() - t_;
     }
 
 public:
     void restart() { *this = Timer(); }
-    auto elapsed_msec() -> decltype(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed()).count()) const {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed()).count();
-    }
-    auto elapsed_sec() -> decltype(std::chrono::duration_cast<std::chrono::seconds>(elapsed()).count()) const {
-        return std::chrono::duration_cast<std::chrono::seconds>(elapsed()).count();
-    }
-    auto elapsed_sec_f() -> decltype(std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1>>>(elapsed()).count()) const {
-        return std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1>>>(elapsed()).count();
-    }
-    auto elapsed_msec_f() -> decltype(std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1000>>>(elapsed()).count()) const {
-        return std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1000>>>(elapsed()).count();
-    }
+    int64_t elapsed_msec  () const { return std::chrono::duration_cast<std::chrono::milliseconds                        >(elapsed()).count(); }
+    int64_t elapsed_sec   () const { return std::chrono::duration_cast<std::chrono::seconds                             >(elapsed()).count(); }
+    float   elapsed_sec_f () const { return std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1   >>>(elapsed()).count(); }
+    float   elapsed_msec_f() const { return std::chrono::duration_cast<std::chrono::duration<float, std::ratio<1, 1000>>>(elapsed()).count(); }
 };
 
 class Extracter {
